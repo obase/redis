@@ -1,0 +1,34 @@
+# conf.yml 中的redis配置文件样例
+redis:
+  -
+    # 引用的key(必需)
+    key:
+    # 地址(必需). 多值用逗号分隔
+    address: "127.0.0.1:6379"
+    # 是否集群(必需)
+    cluster: false
+    # 密码(可选)
+    password:
+    # keepalive间隔(可选). 默认空不设置
+    keepalive: "1m"
+    # 连接超时(可选). 默认空不设置
+    connectTimeout: "1m"
+    # 读超时(可选). 默认空不设置
+    readTimeout: "1m"
+    # 写超时(可选): 默认空不设置
+    writeTimeout: "1m"
+    # 连接池初始数量(可选). 默认为0
+    initConns: 4
+    # 连接池最大数量(可选). 默认没有限制
+    maxConns: 256
+    # 连接池最大空闲数量. 默认为initConns
+    maxIdles:
+    # 连接池测试空闲超时. 处理空闲的连接若超时会执行PING测试是否可用.
+    testIdleTimeout: "20m"
+    # 连接池达到最大链接数量立即报错还是阻塞等待
+    errExceMaxConns: false
+    # 统一后缀. 默认为空, 一般用于多个业务共用Redis集群的情况
+    keyfix:
+    # 代理IP. 默认为空, 一般用于网关集群测试,自动将cluster slots的内网IP替换为外网IP.
+    proxyips: {"127.0.0.1","192.168.2.21"}
+
