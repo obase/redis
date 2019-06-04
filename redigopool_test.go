@@ -53,18 +53,9 @@ func TestNewRedisPool(t *testing.T) {
 }
 
 func TestRedigoPool_Pi(t *testing.T) {
-	opt := &Option{
-		Network:         "tcp",
-		Address:         []string{"127.0.0.1:6379"},
-		MaxConns:        16,
-		MaxIdles:        16,
-		InitConns:       1,
-		TestIdleTimeout: 1 * time.Minute,
-	}
-	pool, err := newRedigoPool(MergeOption(opt))
-	if err != nil {
-		t.Fatal(err)
-	}
+
+	Init()
+	pool := Get("demo")
 
 	t1 := time.Now()
 	for i := 1; i < 10000*1; i++ {

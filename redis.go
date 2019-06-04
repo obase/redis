@@ -161,7 +161,7 @@ func Get(name string) Redis {
 	return Clients[name]
 }
 
-func Init(name string, gen func(option *Option) (Redis, error), opt *Option, def bool) (err error) {
+func Setup(name string, gen func(option *Option) (Redis, error), opt *Option, def bool) (err error) {
 	_, ok := Clients[name]
 	if ok {
 		err = ErrDupKey
@@ -179,14 +179,14 @@ func Init(name string, gen func(option *Option) (Redis, error), opt *Option, def
 	return
 }
 
-func InitPool(name string, opt *Option, def bool) (err error) {
-	return Init(name, func(option *Option) (redis Redis, e error) {
+func SetupPool(name string, opt *Option, def bool) (err error) {
+	return Setup(name, func(option *Option) (redis Redis, e error) {
 		return newRedigoPool(option)
 	}, opt, def) // 指定具体底层实现
 }
 
-func InitCluster(name string, opt *Option, def bool) (err error) {
-	return Init(name, func(option *Option) (redis Redis, e error) {
+func SetupCluster(name string, opt *Option, def bool) (err error) {
+	return Setup(name, func(option *Option) (redis Redis, e error) {
 		return newRedigoCluster(option)
 	}, opt, def) // 指定具体底层实现
 }
