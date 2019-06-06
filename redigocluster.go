@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	redigo "github.com/gomodule/redigo/redis"
+	"net"
 	"strings"
 	"sync"
 )
@@ -197,9 +198,10 @@ func QueryClusterSlots(opt *Option) ([]*SlotInfo, error) {
 
 	var rc redigo.Conn
 	var err error
-
+	var tcp net.Conn
 	for _, address := range opt.Address {
-		if rc, err = redigo.Dial(opt.Network, address); err == nil {
+		if tcp, err = net.DialTimeout(opt.Network, address, opt.ConnectTimeout); err == nil {
+			rc = redigo.NewConn(tcp, opt.ReadTimeout, opt.WriteTimeout)
 			break
 		}
 	}
@@ -279,6 +281,8 @@ func IsSlotsError(err error) bool {
 		if strings.HasPrefix(msg, "MOVED") || strings.HasPrefix(msg, "ASK") {
 			return true
 		}
+	} else if _, ok := err.(*net.OpError); ok {
+		return true
 	}
 	return false
 }

@@ -3,6 +3,7 @@ package redis
 import (
 	"fmt"
 	"github.com/gomodule/redigo/redis"
+	"net"
 	"testing"
 	"time"
 )
@@ -17,13 +18,19 @@ func TestRedigoCluster_Do(t *testing.T) {
 			"120.92.144.252:7001",
 			"120.92.144.252:7002",
 		},
-		Password:  "xxx@a123",
-		MaxConns:  2,
-		MaxIdles:  2,
-		InitConns: 1,
+		Password:       "xxx@a123",
+		MaxConns:       2,
+		MaxIdles:       2,
+		InitConns:      1,
+		ConnectTimeout: 2 * time.Second,
 	}
 	cls, err := newRedigoCluster(MergeOption(opt))
 	if err != nil {
+		switch err := err.(type) {
+		case *net.OpError:
+			fmt.Printf("net.OpError: %v, %v, %v\n", err.Err, err.Timeout(), err.Timeout())
+		}
+		fmt.Println(IsSlotsError(err))
 		t.Fatal(err)
 	}
 	defer cls.Close()
