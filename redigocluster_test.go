@@ -36,17 +36,17 @@ func TestRedigoCluster_Do(t *testing.T) {
 	defer cls.Close()
 
 	start := time.Now()
-	var ps *string
+	var ps string
 	for i := 0; i < 1000*1; i++ {
-		ps, err = String(cls.Do("get", "abc"))
+		ps, _, err = String(cls.Do("get", "abc"))
 		if err != nil {
 			t.Fatal(err)
 		}
 	}
-	if ps == nil {
+	if ps == "" {
 		fmt.Println("nil....")
 	} else {
-		fmt.Printf("%p==%v\n", ps, *ps)
+		fmt.Printf("%v==%v\n", ps, ps)
 	}
 	end := time.Now()
 	fmt.Println("used(ms):", end.Sub(start).Nanoseconds()/1000000)
@@ -78,6 +78,6 @@ func TestKeyfix(t *testing.T) {
 		t.Fatal(f)
 	}
 	fmt.Printf("f is : %v\n", f)
-	v, _ := String(c.Do("GET", "key"))
-	fmt.Println(*v)
+	v, _, _ := String(c.Do("GET", "key"))
+	fmt.Println(v)
 }

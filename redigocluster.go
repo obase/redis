@@ -252,23 +252,23 @@ func QueryClusterSlots(opt *Option) ([]*SlotInfo, error) {
 	plen := len(opt.Proxyips)
 	for i, info := range infos {
 		data := info.([]interface{})
-		start, _ := Int(data[0], nil)
-		end, _ := Int(data[1], nil)
+		start, _, _ := Int(data[0], nil)
+		end, _, _ := Int(data[1], nil)
 		addrs := data[2].([]interface{})
-		host, _ := String(addrs[0], nil)
-		port, _ := Int(addrs[1], nil)
+		host, _, _ := String(addrs[0], nil)
+		port, _, _ := Int(addrs[1], nil)
 
 		// 替换成代理IP
 		if plen > 0 {
-			vhost := opt.Proxyips[*host]
+			vhost := opt.Proxyips[host]
 			if vhost != "" {
-				host = &vhost
+				host = vhost
 			}
 		}
 		ret[i] = &SlotInfo{
-			Start:   *start,
-			End:     *end,
-			Address: fmt.Sprintf("%s:%d", *host, *port),
+			Start:   start,
+			End:     end,
+			Address: fmt.Sprintf("%s:%d", host, port),
 		}
 	}
 

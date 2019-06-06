@@ -346,7 +346,7 @@ func (p *redigoPool) Tx(bf Batch, args ...interface{}) (ret []interface{}, err e
 		return
 	}
 
-	ret, err = ValueSlice(rc.C.Do("EXEC"))
+	ret, _, err = ValueSlice(rc.C.Do("EXEC"))
 	pi.P.Put(pi.redigoConn, &err)
 	return
 }

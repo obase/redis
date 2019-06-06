@@ -66,7 +66,7 @@ func TestRedigoPool_Pi(t *testing.T) {
 		////fmt.Println(ret)
 		//_ = ret
 
-		ret, err := StringMap(pool.Do("get", "abdcfxxxx"))
+		ret, _, err := StringMap(pool.Do("get", "abdcfxxxx"))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -87,7 +87,7 @@ func TestRedigoPool_Tx(t *testing.T) {
 		//err = errors.New("testing")
 		return
 	})
-	v, _ := String(p.Do("GET", "key1"))
+	v, _, _ := String(p.Do("GET", "key1"))
 	fmt.Println(v)
 }
 
@@ -140,9 +140,9 @@ func TestRedigoPool_Do(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ret, err := String(p.Do("get", "abc"))
+	ret, _, err := String(p.Do("get", "abc"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println(*ret)
+	fmt.Println(ret)
 }
