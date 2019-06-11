@@ -54,7 +54,6 @@ func TestNewRedisPool(t *testing.T) {
 
 func TestRedigoPool_Pi(t *testing.T) {
 
-	Init()
 	pool := Get("demo")
 
 	t1 := time.Now()
