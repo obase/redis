@@ -2,6 +2,7 @@ package redis
 
 import (
 	"errors"
+	"strings"
 	"time"
 )
 
@@ -172,7 +173,11 @@ func Setup(name string, gen func(option *Option) (Redis, error), opt *Option, de
 	if err != nil {
 		return
 	}
-	Clients[name] = c
+	for _, k := range strings.Split(name, ",") {
+		if k = strings.TrimSpace(k); len(k) > 0 {
+			Clients[k] = c
+		}
+	}
 	if def {
 		Default = c
 	}
