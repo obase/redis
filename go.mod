@@ -4,4 +4,4 @@ go 1.12
 
 require github.com/gomodule/redigo v2.0.0+incompatible
 
-require github.com/obase/conf v0.9.0
+require github.com/obase/conf v0.10.0

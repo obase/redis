@@ -156,10 +156,10 @@ var (
 )
 
 func Get(name string) Redis {
-	if name == "" {
-		return Default
+	if rt, ok := Clients[name]; ok {
+		return rt
 	}
-	return Clients[name]
+	return nil
 }
 
 func Setup(name string, gen func(option *Option) (Redis, error), opt *Option, def bool) (err error) {
