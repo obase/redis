@@ -113,16 +113,48 @@ func (rc *redigoCluster) Do(cmd string, keysArgs ...interface{}) (reply interfac
 
 }
 
-// 注意: 集群模式不支持
 // 管道批量, 有可能部分成功.
-func (rc *redigoCluster) Pi(bf Batch, args ...interface{}) (reply []interface{}, err error) {
-	return nil, ErrUnsupportOperation
+func (rc *redigoCluster) Pi(bf Batch, keysArgs ...interface{}) (reply []interface{}, err error) {
+	if len(keysArgs) == 0 {
+		return nil, ErrUnsupportOperation
+	}
+	key, ok := keysArgs[0].(string)
+	if !ok {
+		return nil, ErrArgumentException
+	}
+	// TODO: 兼容性做法
+	if rc.Keyfix != "" {
+		key = Keyfix(key, rc.Keyfix)
+		keysArgs[0] = key
+	}
+	reply, err = rc.indexRedis(key).Pi(bf, keysArgs...)
+	if err != nil && IsSlotsError(err) {
+		rc.UpdateClusterIndexes()
+		reply, err = rc.indexRedis(key).Pi(bf, keysArgs...)
+	}
+	return
 }
 
-// 注意: 集群模式不支持
 // 事务批量, 要么全部成功, 要么全部失败.
-func (rc *redigoCluster) Tx(bf Batch, args ...interface{}) (reply []interface{}, err error) {
-	return nil, ErrUnsupportOperation
+func (rc *redigoCluster) Tx(bf Batch, keysArgs ...interface{}) (reply []interface{}, err error) {
+	if len(keysArgs) == 0 {
+		return nil, ErrUnsupportOperation
+	}
+	key, ok := keysArgs[0].(string)
+	if !ok {
+		return nil, ErrArgumentException
+	}
+	// TODO: 兼容性做法
+	if rc.Keyfix != "" {
+		key = Keyfix(key, rc.Keyfix)
+		keysArgs[0] = key
+	}
+	reply, err = rc.indexRedis(key).Tx(bf, keysArgs...)
+	if err != nil && IsSlotsError(err) {
+		rc.UpdateClusterIndexes()
+		reply, err = rc.indexRedis(key).Tx(bf, keysArgs...)
+	}
+	return
 }
 
 // Publish
