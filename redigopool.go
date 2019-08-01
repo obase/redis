@@ -250,15 +250,16 @@ func (p *redigoPool) Put(conn *redigoConn, perr *error) {
 	// 避免独占
 	runtime.Gosched()
 }
+/*************************DONE: 链表操作*******************************/
 
+/*************************START: 接口操作*******************************/
 func (p *redigoPool) Do(cmd string, keysArgs ...interface{}) (reply interface{}, err error) {
 	rc, err := p.Get()
 	if err != nil {
 		return
 	}
-	// TODO: 兼容性做法
-	if !p.Cluster && p.Keyfix != "" && len(keysArgs) > 0 {
-		keysArgs[0] = Keyfix(keysArgs[0], p.Keyfix)
+	if p.Keyfix != "" && len(keysArgs) > 0 {
+		keysArgs = Keyfix(&p.Keyfix, keysArgs)
 	}
 	reply, err = rc.C.Do(cmd, keysArgs...)
 	if err == redigo.ErrNil {
@@ -270,7 +271,7 @@ func (p *redigoPool) Do(cmd string, keysArgs ...interface{}) (reply interface{},
 }
 
 // 注意: 集群模式不支持
-func (p *redigoPool) Pi(bf Batch, args ...interface{}) (ret []interface{}, err error) {
+func (p *redigoPool) Pi(bf Batch, keysArgs ...interface{}) (ret []interface{}, err error) {
 	rc, err := p.Get()
 	if err != nil {
 		return
@@ -278,7 +279,7 @@ func (p *redigoPool) Pi(bf Batch, args ...interface{}) (ret []interface{}, err e
 	pi := &redigoOP{
 		redigoConn: rc,
 	}
-	err = bf(pi, args...)
+	err = bf(pi, keysArgs...)
 	if pi.Err != nil {
 		//内部错误,需要销毁CONN
 		pi.P.Put(pi.redigoConn, &pi.Err)
@@ -408,3 +409,5 @@ func (p *redigoPool) Close() {
 	p.Scan(closeRegigoConn)
 	return
 }
+
+/*************************DONE: 接口操作*******************************/

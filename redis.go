@@ -1,8 +1,10 @@
 package redis
 
 import (
+	"bytes"
 	"errors"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -57,16 +59,16 @@ type OP interface {
 	Do(cmd string, keysArgs ...interface{}) (err error)
 }
 type SubFun func(reply interface{}, rerr error) (stop bool, err error)
-type Batch func(op OP, args ...interface{}) (err error)
+type Batch func(op OP, keysArgs ...interface{}) (err error)
 
 type Redis interface {
 	Do(cmd string, keysArgs ...interface{}) (reply interface{}, err error)
 	// 注意: 集群模式不支持
 	// 管道批量, 有可能部分成功.
-	Pi(bf Batch, args ...interface{}) (reply []interface{}, err error)
+	Pi(bf Batch, keysArgs ...interface{}) (reply []interface{}, err error)
 	// 注意: 集群模式不支持
 	// 事务批量, 要么全部成功, 要么全部失败.
-	Tx(bf Batch, args ...interface{}) (reply []interface{}, err error)
+	Tx(bf Batch, keysArgs ...interface{}) (reply []interface{}, err error)
 	// Publish
 	Pub(key string, msg interface{}) (err error)
 	// Subscribe, 阻塞执行sf直到返回stop或error才会结束
@@ -257,6 +259,18 @@ func Slot(key string) uint16 {
 	return crc % CLUSTER_SLOTS_NUMBER
 }
 
-func Keyfix(key interface{}, fix string) string {
-	return key.(string) + "." + fix
+var buffPool = &sync.Pool{
+	New: func() interface{} {
+		return bytes.NewBuffer(make([]byte, 256))
+	},
+}
+
+func Keyfix(fix *string, keysArgs []interface{}) []interface{} {
+	buf := buffPool.Get().(*bytes.Buffer)
+	buf.WriteString(keysArgs[0].(string))
+	buf.WriteByte('.')
+	buf.WriteString(*fix)
+	keysArgs[0] = buf.String()
+	buffPool.Put(buf)
+	return keysArgs
 }
