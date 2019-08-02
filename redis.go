@@ -266,17 +266,22 @@ var buffPool = &sync.Pool{
 	},
 }
 
-func FillKeyfix1(key *string, fix *string, keysArgs ...interface{}) {
+/*
+第一种形式, 使用key更新key
+*/
+func FillKeyfix1(fix *string, key *string) {
 	buf := buffPool.Get().(*bytes.Buffer)
 	buf.Reset()
-	buf.WriteString(keysArgs[0].(string))
+	buf.WriteString(*key)
 	buf.WriteByte('.')
 	buf.WriteString(*fix)
 	*key = buf.String()
 	buffPool.Put(buf)
-	return
 }
 
+/*
+第二种形式: 使用keysArgs[0], 更新keysArgs[0]
+*/
 func FillKeyfix2(fix *string, keysArgs []interface{}) {
 	buf := buffPool.Get().(*bytes.Buffer)
 	buf.Reset()
@@ -287,7 +292,23 @@ func FillKeyfix2(fix *string, keysArgs []interface{}) {
 	buffPool.Put(buf)
 }
 
-func FillKeyfix13(key *string, fix *string, keysArgs []interface{}) {
+/*
+第三种形式: 使用keysArgs[0] 更新key
+*/
+func FillKeyfix3(fix *string, key *string, keysArgs []interface{}) {
+	buf := buffPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	buf.WriteString(keysArgs[0].(string))
+	buf.WriteByte('.')
+	buf.WriteString(*fix)
+	*key = buf.String()
+	buffPool.Put(buf)
+}
+
+/*
+第四种形式: 使用keysArgs[0] 更新key与keysArgs[0]
+*/
+func FillKeyfix4(key *string, fix *string, keysArgs []interface{}) {
 	buf := buffPool.Get().(*bytes.Buffer)
 	buf.Reset()
 	buf.WriteString(keysArgs[0].(string))

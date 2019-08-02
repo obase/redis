@@ -362,7 +362,7 @@ func (p *redigoPool) Tx(bf Batch, args ...interface{}) (ret []interface{}, err e
 
 func (p *redigoPool) Pub(key string, msg interface{}) (err error) {
 	if p.Keyfix != "" {
-		FillKeyfix1(&key, &p.Keyfix, key)
+		FillKeyfix1(&p.Keyfix, &key)
 	}
 	return p.pub(key, msg)
 }
@@ -379,7 +379,7 @@ func (p *redigoPool) pub(key string, msg interface{}) (err error) {
 // Subscribe, 阻塞执行sf直到返回stop或error才会结束
 func (p *redigoPool) Sub(key string, sf SubFun) (err error) {
 	if p.Keyfix != "" {
-		FillKeyfix1(&key, &p.Keyfix, key)
+		FillKeyfix1(&p.Keyfix, &key)
 	}
 	return p.sub(key, sf)
 }

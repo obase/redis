@@ -98,7 +98,7 @@ func (rc *redigoCluster) Do(cmd string, keysArgs ...interface{}) (reply interfac
 
 	var key string
 	if rc.Keyfix != "" {
-		FillKeyfix13(&key, &rc.Keyfix, keysArgs)
+		FillKeyfix4(&rc.Keyfix, &key, keysArgs)
 	}
 	reply, err = rc.indexRedis(key).do(cmd, keysArgs)
 	if err != nil && IsSlotsError(err) {
@@ -117,7 +117,7 @@ func (rc *redigoCluster) Pi(bf Batch, keysArgs ...interface{}) (reply []interfac
 	}
 	var key string
 	if rc.Keyfix != "" {
-		FillKeyfix1(&key, &rc.Keyfix, keysArgs)
+		FillKeyfix3(&rc.Keyfix, &key, keysArgs)
 	}
 	reply, err = rc.indexRedis(key).Pi(bf, keysArgs...)
 	if err != nil && IsSlotsError(err) {
@@ -134,7 +134,7 @@ func (rc *redigoCluster) Tx(bf Batch, keysArgs ...interface{}) (reply []interfac
 	}
 	var key string
 	if rc.Keyfix != "" {
-		FillKeyfix1(&key, &rc.Keyfix, keysArgs)
+		FillKeyfix3(&rc.Keyfix, &key, keysArgs)
 	}
 	reply, err = rc.indexRedis(key).Tx(bf, keysArgs...)
 	if err != nil && IsSlotsError(err) {
@@ -147,7 +147,7 @@ func (rc *redigoCluster) Tx(bf Batch, keysArgs ...interface{}) (reply []interfac
 // Publish
 func (rc *redigoCluster) Pub(key string, msg interface{}) (err error) {
 	if rc.Keyfix != "" {
-		FillKeyfix1(&key, &rc.Keyfix, rc.Keyfix)
+		FillKeyfix1(&rc.Keyfix, &key)
 	}
 	err = rc.indexRedis(key).pub(key, msg)
 	if err != nil && IsSlotsError(err) {
@@ -161,7 +161,7 @@ func (rc *redigoCluster) Pub(key string, msg interface{}) (err error) {
 // Subscribe, 阻塞执行sf直到返回stop或error才会结束
 func (rc *redigoCluster) Sub(key string, sf SubFun) (err error) {
 	if rc.Keyfix != "" {
-		FillKeyfix1(&key, &rc.Keyfix, rc.Keyfix)
+		FillKeyfix1(&rc.Keyfix, &key)
 	}
 	err = rc.indexRedis(key).sub(key, sf)
 	if err != nil && IsSlotsError(err) {
@@ -178,7 +178,7 @@ func (rc *redigoCluster) Eval(script string, keyCount int, keysArgs ...interface
 	}
 	var key string
 	if rc.Keyfix != "" {
-		FillKeyfix13(&key, &rc.Keyfix, keysArgs)
+		FillKeyfix4(&rc.Keyfix, &key, keysArgs)
 	}
 	reply, err = rc.indexRedis(key).eval(script, keyCount, keysArgs)
 	if err != nil && IsSlotsError(err) {
