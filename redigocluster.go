@@ -93,21 +93,17 @@ func (rc *redigoCluster) indexRedis(key string) *redigoPool {
 func (rc *redigoCluster) Do(cmd string, keysArgs ...interface{}) (reply interface{}, err error) {
 
 	if len(keysArgs) == 0 {
-		return nil, ErrUnsupportOperation
-	}
-	key, ok := keysArgs[0].(string)
-	if !ok {
 		return nil, ErrArgumentException
 	}
-	// TODO: 兼容性做法
+
+	var key string
 	if rc.Keyfix != "" {
-		key = Keyfix(key, rc.Keyfix)
-		keysArgs[0] = key
+		FillKeyfix13(&key, &rc.Keyfix, keysArgs)
 	}
-	reply, err = rc.indexRedis(key).Do(cmd, keysArgs...)
+	reply, err = rc.indexRedis(key).do(cmd, keysArgs...)
 	if err != nil && IsSlotsError(err) {
 		rc.UpdateClusterIndexes()
-		reply, err = rc.indexRedis(key).Do(cmd, keysArgs...)
+		reply, err = rc.indexRedis(key).do(cmd, keysArgs...)
 	}
 	return
 
@@ -115,17 +111,13 @@ func (rc *redigoCluster) Do(cmd string, keysArgs ...interface{}) (reply interfac
 
 // 管道批量, 有可能部分成功.
 func (rc *redigoCluster) Pi(bf Batch, keysArgs ...interface{}) (reply []interface{}, err error) {
+
 	if len(keysArgs) == 0 {
-		return nil, ErrUnsupportOperation
-	}
-	key, ok := keysArgs[0].(string)
-	if !ok {
 		return nil, ErrArgumentException
 	}
-	// TODO: 兼容性做法
+	var key string
 	if rc.Keyfix != "" {
-		key = Keyfix(key, rc.Keyfix)
-		keysArgs[0] = key
+		FillKeyfix1(&key, &rc.Keyfix, keysArgs)
 	}
 	reply, err = rc.indexRedis(key).Pi(bf, keysArgs...)
 	if err != nil && IsSlotsError(err) {
@@ -138,16 +130,11 @@ func (rc *redigoCluster) Pi(bf Batch, keysArgs ...interface{}) (reply []interfac
 // 事务批量, 要么全部成功, 要么全部失败.
 func (rc *redigoCluster) Tx(bf Batch, keysArgs ...interface{}) (reply []interface{}, err error) {
 	if len(keysArgs) == 0 {
-		return nil, ErrUnsupportOperation
-	}
-	key, ok := keysArgs[0].(string)
-	if !ok {
 		return nil, ErrArgumentException
 	}
-	// TODO: 兼容性做法
+	var key string
 	if rc.Keyfix != "" {
-		key = Keyfix(key, rc.Keyfix)
-		keysArgs[0] = key
+		FillKeyfix1(&key, &rc.Keyfix, keysArgs)
 	}
 	reply, err = rc.indexRedis(key).Tx(bf, keysArgs...)
 	if err != nil && IsSlotsError(err) {
@@ -159,14 +146,13 @@ func (rc *redigoCluster) Tx(bf Batch, keysArgs ...interface{}) (reply []interfac
 
 // Publish
 func (rc *redigoCluster) Pub(key string, msg interface{}) (err error) {
-	// TODO: 兼容性做法
 	if rc.Keyfix != "" {
-		key = Keyfix(key, rc.Keyfix)
+		FillKeyfix1(&key, &rc.Keyfix, rc.Keyfix)
 	}
-	err = rc.indexRedis(key).Pub(key, msg)
+	err = rc.indexRedis(key).pub(key, msg)
 	if err != nil && IsSlotsError(err) {
 		rc.UpdateClusterIndexes()
-		err = rc.indexRedis(key).Pub(key, msg)
+		err = rc.indexRedis(key).pub(key, msg)
 	}
 	return
 
@@ -174,36 +160,30 @@ func (rc *redigoCluster) Pub(key string, msg interface{}) (err error) {
 
 // Subscribe, 阻塞执行sf直到返回stop或error才会结束
 func (rc *redigoCluster) Sub(key string, sf SubFun) (err error) {
-	// TODO: 兼容性做法
 	if rc.Keyfix != "" {
-		key = Keyfix(key, rc.Keyfix)
+		FillKeyfix1(&key, &rc.Keyfix, rc.Keyfix)
 	}
-	err = rc.indexRedis(key).Sub(key, sf)
+	err = rc.indexRedis(key).sub(key, sf)
 	if err != nil && IsSlotsError(err) {
 		rc.UpdateClusterIndexes()
-		err = rc.indexRedis(key).Sub(key, sf)
+		err = rc.indexRedis(key).sub(key, sf)
 	}
 	return
 
 }
 
 func (rc *redigoCluster) Eval(script string, keyCount int, keysArgs ...interface{}) (reply interface{}, err error) {
-	if keyCount != 1 {
-		return nil, ErrUnsupportKeyCount
-	}
-	key, ok := keysArgs[0].(string)
-	if !ok {
+	if len(keysArgs) == 0 {
 		return nil, ErrArgumentException
 	}
-	// TODO: 兼容性做法
+	var key string
 	if rc.Keyfix != "" {
-		key = Keyfix(key, rc.Keyfix)
-		keysArgs[0] = key
+		FillKeyfix13(&key, &rc.Keyfix, keysArgs)
 	}
-	reply, err = rc.indexRedis(key).Eval(script, keyCount, keysArgs...)
+	reply, err = rc.indexRedis(key).eval(script, keyCount, keysArgs...)
 	if err != nil && IsSlotsError(err) {
 		rc.UpdateClusterIndexes()
-		reply, err = rc.indexRedis(key).Eval(script, keyCount, keysArgs...)
+		reply, err = rc.indexRedis(key).eval(script, keyCount, keysArgs...)
 	}
 	return
 }

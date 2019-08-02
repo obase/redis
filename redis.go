@@ -96,6 +96,7 @@ type Option struct {
 	TestIdleTimeout time.Duration //最大空闲超时, 超出会在获取时执行PING,如果失败则舍弃重建. 默认0表示不处理. 该选项是TestOnBorrow的一种优化
 	ErrExceMaxConns bool          // 达到最大链接数, 是等待还是报错. 默认false等待
 	Keyfix          string        // Key的统一后缀. 兼容此前的name情况, 不建议使用
+	Select          int           // 选择DB下标, 默认0
 	Cluster         bool          //是否集群
 
 	// cluster参数
@@ -265,12 +266,34 @@ var buffPool = &sync.Pool{
 	},
 }
 
-func Keyfix(fix *string, keysArgs []interface{}) []interface{} {
+func FillKeyfix1(key *string, fix *string, keysArgs ...interface{}) {
 	buf := buffPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	buf.WriteString(keysArgs[0].(string))
+	buf.WriteByte('.')
+	buf.WriteString(*fix)
+	*key = buf.String()
+	buffPool.Put(buf)
+	return
+}
+
+func FillKeyfix2(fix *string, keysArgs []interface{}) {
+	buf := buffPool.Get().(*bytes.Buffer)
+	buf.Reset()
 	buf.WriteString(keysArgs[0].(string))
 	buf.WriteByte('.')
 	buf.WriteString(*fix)
 	keysArgs[0] = buf.String()
 	buffPool.Put(buf)
-	return keysArgs
+}
+
+func FillKeyfix13(key *string, fix *string, keysArgs []interface{}) {
+	buf := buffPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	buf.WriteString(keysArgs[0].(string))
+	buf.WriteByte('.')
+	buf.WriteString(*fix)
+	*key = buf.String()
+	buffPool.Put(buf)
+	keysArgs[0] = *key
 }

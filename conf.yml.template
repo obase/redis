@@ -29,6 +29,8 @@ redis:
     errExceMaxConns: false
     # 统一后缀. 默认为空, 一般用于多个业务共用Redis集群的情况
     keyfix:
+    # 支持Database下标, 默认0
+    select: 0
     # 代理IP. 默认为空, 一般用于网关集群测试,自动将cluster slots的内网IP替换为外网IP.
     proxyips: {"127.0.0.1","192.168.2.21"}
 

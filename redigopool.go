@@ -250,16 +250,21 @@ func (p *redigoPool) Put(conn *redigoConn, perr *error) {
 	// 避免独占
 	runtime.Gosched()
 }
+
 /*************************DONE: 链表操作*******************************/
 
 /*************************START: 接口操作*******************************/
+
 func (p *redigoPool) Do(cmd string, keysArgs ...interface{}) (reply interface{}, err error) {
+	if p.Keyfix != "" && len(keysArgs) > 0 {
+		FillKeyfix2(&p.Keyfix, keysArgs)
+	}
+	return p.do(cmd, keysArgs)
+}
+func (p *redigoPool) do(cmd string, keysArgs ...interface{}) (reply interface{}, err error) {
 	rc, err := p.Get()
 	if err != nil {
 		return
-	}
-	if p.Keyfix != "" && len(keysArgs) > 0 {
-		keysArgs = Keyfix(&p.Keyfix, keysArgs)
 	}
 	reply, err = rc.C.Do(cmd, keysArgs...)
 	if err == redigo.ErrNil {
@@ -270,7 +275,6 @@ func (p *redigoPool) Do(cmd string, keysArgs ...interface{}) (reply interface{},
 	return
 }
 
-// 注意: 集群模式不支持
 func (p *redigoPool) Pi(bf Batch, keysArgs ...interface{}) (ret []interface{}, err error) {
 	rc, err := p.Get()
 	if err != nil {
@@ -352,8 +356,13 @@ func (p *redigoPool) Tx(bf Batch, args ...interface{}) (ret []interface{}, err e
 	return
 }
 
-// Publish
 func (p *redigoPool) Pub(key string, msg interface{}) (err error) {
+	if p.Keyfix != "" {
+		FillKeyfix1(&key, &p.Keyfix, key)
+	}
+	return p.pub(key, msg)
+}
+func (p *redigoPool) pub(key string, msg interface{}) (err error) {
 	rc, err := p.Get()
 	if err != nil {
 		return
@@ -365,6 +374,12 @@ func (p *redigoPool) Pub(key string, msg interface{}) (err error) {
 
 // Subscribe, 阻塞执行sf直到返回stop或error才会结束
 func (p *redigoPool) Sub(key string, sf SubFun) (err error) {
+	if p.Keyfix != "" {
+		FillKeyfix1(&key, &p.Keyfix, key)
+	}
+	return p.sub(key, sf)
+}
+func (p *redigoPool) sub(key string, sf SubFun) (err error) {
 	rc, err := p.Get()
 	if err != nil {
 		return
@@ -386,11 +401,19 @@ func (p *redigoPool) Sub(key string, sf SubFun) (err error) {
 }
 
 func (p *redigoPool) Eval(script string, keyCount int, keysArgs ...interface{}) (reply interface{}, err error) {
+	if p.Keyfix != "" && len(keysArgs) > 0 {
+		FillKeyfix2(&p.Keyfix, keysArgs)
+	}
+	return p.eval(script, keyCount, keysArgs...)
+}
+
+func (p *redigoPool) eval(script string, keyCount int, keysArgs ...interface{}) (reply interface{}, err error) {
 	rc, err := p.Get()
 	if err != nil {
 		return
 	}
 	s := redigo.NewScript(keyCount, script)
+
 	reply, err = s.Do(rc.C, keysArgs...)
 	if err == redigo.ErrNil {
 		reply = nil
