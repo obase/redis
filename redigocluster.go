@@ -159,14 +159,14 @@ func (rc *redigoCluster) Pub(key string, msg interface{}) (err error) {
 }
 
 // Subscribe, 阻塞执行sf直到返回stop或error才会结束
-func (rc *redigoCluster) Sub(key string, sf SubFun) (err error) {
+func (rc *redigoCluster) Sub(key string, data SubDataFunc, meta SubMetaFunc) (err error) {
 	if rc.Keyfix != "" {
 		FillKeyfix1(&rc.Keyfix, &key)
 	}
-	err = rc.indexRedis(key).sub(key, sf)
+	err = rc.indexRedis(key).sub(key, data, meta)
 	if err != nil && IsSlotsError(err) {
 		rc.UpdateClusterIndexes()
-		err = rc.indexRedis(key).sub(key, sf)
+		err = rc.indexRedis(key).sub(key, data, meta)
 	}
 	return
 

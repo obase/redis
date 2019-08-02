@@ -377,29 +377,29 @@ func (p *redigoPool) pub(key string, msg interface{}) (err error) {
 }
 
 // Subscribe, 阻塞执行sf直到返回stop或error才会结束
-func (p *redigoPool) Sub(key string, sf SubFun) (err error) {
+func (p *redigoPool) Sub(key string, data SubDataFunc, meta SubMetaFunc) (err error) {
 	if p.Keyfix != "" {
 		FillKeyfix1(&p.Keyfix, &key)
 	}
-	return p.sub(key, sf)
+	return p.sub(key, data, meta)
 }
-func (p *redigoPool) sub(key string, sf SubFun) (err error) {
+func (p *redigoPool) sub(key string, data SubDataFunc, meta SubMetaFunc) (err error) {
 	rc, err := p.Get()
 	if err != nil {
-		return
+		return err
 	}
-	err = rc.C.Send("SUBSCRIBE", key)
-	if err != nil {
-		rc.P.Put(rc, &err)
-		return
-	}
-
-	var stop bool
+	psc := redigo.PubSubConn{Conn: rc.C}
+	psc.Subscribe(key)
 	for {
-		stop, err = sf(rc.C.Receive())
-		if stop || err != nil {
-			rc.P.Put(rc, &err)
-			return
+		switch v := psc.Receive().(type) {
+		case redigo.Message:
+			data(v.Data)
+		case redigo.Subscription:
+			if meta != nil {
+				meta(v.Count)
+			}
+		case error:
+			return v
 		}
 	}
 }

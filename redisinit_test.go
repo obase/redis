@@ -24,3 +24,17 @@ func TestRedisTx(t *testing.T) {
 	}
 
 }
+
+func TestRedisSub(t *testing.T) {
+	r := Get("demo")
+	r.Sub("bcd", func(data []byte) {
+		fmt.Println("data ", string(data))
+	}, func(count int) {
+		fmt.Println("meta ", count)
+	})
+}
+
+func TestRedisPub(t *testing.T) {
+	r := Get("demo")
+	r.Pub("bcd", "123456")
+}

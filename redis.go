@@ -58,7 +58,8 @@ type Scanner interface {
 type OP interface {
 	Do(cmd string, keysArgs ...interface{}) (err error)
 }
-type SubFun func(reply interface{}, rerr error) (stop bool, err error)
+type SubDataFunc func(data []byte)
+type SubMetaFunc func(count int)
 type Batch func(op OP, keysArgs ...interface{}) (err error)
 
 type Redis interface {
@@ -72,7 +73,7 @@ type Redis interface {
 	// Publish
 	Pub(key string, msg interface{}) (err error)
 	// Subscribe, 阻塞执行sf直到返回stop或error才会结束
-	Sub(key string, sf SubFun) (err error)
+	Sub(key string, data SubDataFunc, meta SubMetaFunc) (err error)
 	// Script, 执行Lua脚本, 集群模式只支持单个KEYS
 	Eval(script string, keys int, keysArgs ...interface{}) (reply interface{}, err error)
 	//关闭清除链接
