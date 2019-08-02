@@ -183,6 +183,10 @@ func (p *redigoPool) newRedigoConn() (*redigoConn, error) {
 	if p.Option.Password != "" {
 		_, err = c.Do("AUTH", p.Option.Password)
 	}
+	// 如果不是集群,则支持select
+	if !p.Option.Cluster && p.Option.Select > 0 {
+		_, err = c.Do("SELECT", p.Option.Select)
+	}
 
 	// 创建元素
 	return &redigoConn{
@@ -251,14 +255,20 @@ func (p *redigoPool) Put(conn *redigoConn, perr *error) {
 	runtime.Gosched()
 }
 
+/*************************DONE: 链表操作*******************************/
+
+/*************************START: 接口操作*******************************/
+
 func (p *redigoPool) Do(cmd string, keysArgs ...interface{}) (reply interface{}, err error) {
+	if p.Keyfix != "" && len(keysArgs) > 0 {
+		FillKeyfix2(&p.Keyfix, keysArgs)
+	}
+	return p.do(cmd, keysArgs)
+}
+func (p *redigoPool) do(cmd string, keysArgs []interface{}) (reply interface{}, err error) {
 	rc, err := p.Get()
 	if err != nil {
 		return
-	}
-	// TODO: 兼容性做法
-	if !p.Cluster && p.Keyfix != "" && len(keysArgs) > 0 {
-		keysArgs[0] = Keyfix(keysArgs[0], p.Keyfix)
 	}
 	reply, err = rc.C.Do(cmd, keysArgs...)
 	if err == redigo.ErrNil {
@@ -269,8 +279,7 @@ func (p *redigoPool) Do(cmd string, keysArgs ...interface{}) (reply interface{},
 	return
 }
 
-// 注意: 集群模式不支持
-func (p *redigoPool) Pi(bf Batch, args ...interface{}) (ret []interface{}, err error) {
+func (p *redigoPool) Pi(bf Batch, keysArgs ...interface{}) (ret []interface{}, err error) {
 	rc, err := p.Get()
 	if err != nil {
 		return
@@ -278,7 +287,7 @@ func (p *redigoPool) Pi(bf Batch, args ...interface{}) (ret []interface{}, err e
 	pi := &redigoOP{
 		redigoConn: rc,
 	}
-	err = bf(pi, args...)
+	err = bf(pi, keysArgs...)
 	if pi.Err != nil {
 		//内部错误,需要销毁CONN
 		pi.P.Put(pi.redigoConn, &pi.Err)
@@ -351,8 +360,13 @@ func (p *redigoPool) Tx(bf Batch, args ...interface{}) (ret []interface{}, err e
 	return
 }
 
-// Publish
 func (p *redigoPool) Pub(key string, msg interface{}) (err error) {
+	if p.Keyfix != "" {
+		FillKeyfix1(&p.Keyfix, &key)
+	}
+	return p.pub(key, msg)
+}
+func (p *redigoPool) pub(key string, msg interface{}) (err error) {
 	rc, err := p.Get()
 	if err != nil {
 		return
@@ -363,33 +377,47 @@ func (p *redigoPool) Pub(key string, msg interface{}) (err error) {
 }
 
 // Subscribe, 阻塞执行sf直到返回stop或error才会结束
-func (p *redigoPool) Sub(key string, sf SubFun) (err error) {
+func (p *redigoPool) Sub(key string, data SubDataFunc, meta SubMetaFunc) (err error) {
+	if p.Keyfix != "" {
+		FillKeyfix1(&p.Keyfix, &key)
+	}
+	return p.sub(key, data, meta)
+}
+func (p *redigoPool) sub(key string, data SubDataFunc, meta SubMetaFunc) (err error) {
 	rc, err := p.Get()
 	if err != nil {
-		return
+		return err
 	}
-	err = rc.C.Send("SUBSCRIBE", key)
-	if err != nil {
-		rc.P.Put(rc, &err)
-		return
-	}
-
-	var stop bool
+	psc := redigo.PubSubConn{Conn: rc.C}
+	psc.Subscribe(key)
 	for {
-		stop, err = sf(rc.C.Receive())
-		if stop || err != nil {
-			rc.P.Put(rc, &err)
-			return
+		switch v := psc.Receive().(type) {
+		case redigo.Message:
+			data(v.Data)
+		case redigo.Subscription:
+			if meta != nil {
+				meta(v.Count)
+			}
+		case error:
+			return v
 		}
 	}
 }
 
 func (p *redigoPool) Eval(script string, keyCount int, keysArgs ...interface{}) (reply interface{}, err error) {
+	if p.Keyfix != "" && len(keysArgs) > 0 {
+		FillKeyfix2(&p.Keyfix, keysArgs)
+	}
+	return p.eval(script, keyCount, keysArgs)
+}
+
+func (p *redigoPool) eval(script string, keyCount int, keysArgs []interface{}) (reply interface{}, err error) {
 	rc, err := p.Get()
 	if err != nil {
 		return
 	}
 	s := redigo.NewScript(keyCount, script)
+
 	reply, err = s.Do(rc.C, keysArgs...)
 	if err == redigo.ErrNil {
 		reply = nil
@@ -408,3 +436,5 @@ func (p *redigoPool) Close() {
 	p.Scan(closeRegigoConn)
 	return
 }
+
+/*************************DONE: 接口操作*******************************/

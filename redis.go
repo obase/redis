@@ -1,8 +1,10 @@
 package redis
 
 import (
+	"bytes"
 	"errors"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -56,21 +58,22 @@ type Scanner interface {
 type OP interface {
 	Do(cmd string, keysArgs ...interface{}) (err error)
 }
-type SubFun func(reply interface{}, rerr error) (stop bool, err error)
-type Batch func(op OP, args ...interface{}) (err error)
+type SubDataFunc func(data []byte)
+type SubMetaFunc func(count int)
+type Batch func(op OP, keysArgs ...interface{}) (err error)
 
 type Redis interface {
 	Do(cmd string, keysArgs ...interface{}) (reply interface{}, err error)
 	// 注意: 集群模式不支持
 	// 管道批量, 有可能部分成功.
-	Pi(bf Batch, args ...interface{}) (reply []interface{}, err error)
+	Pi(bf Batch, keysArgs ...interface{}) (reply []interface{}, err error)
 	// 注意: 集群模式不支持
 	// 事务批量, 要么全部成功, 要么全部失败.
-	Tx(bf Batch, args ...interface{}) (reply []interface{}, err error)
+	Tx(bf Batch, keysArgs ...interface{}) (reply []interface{}, err error)
 	// Publish
 	Pub(key string, msg interface{}) (err error)
 	// Subscribe, 阻塞执行sf直到返回stop或error才会结束
-	Sub(key string, sf SubFun) (err error)
+	Sub(key string, data SubDataFunc, meta SubMetaFunc) (err error)
 	// Script, 执行Lua脚本, 集群模式只支持单个KEYS
 	Eval(script string, keys int, keysArgs ...interface{}) (reply interface{}, err error)
 	//关闭清除链接
@@ -94,6 +97,7 @@ type Option struct {
 	TestIdleTimeout time.Duration //最大空闲超时, 超出会在获取时执行PING,如果失败则舍弃重建. 默认0表示不处理. 该选项是TestOnBorrow的一种优化
 	ErrExceMaxConns bool          // 达到最大链接数, 是等待还是报错. 默认false等待
 	Keyfix          string        // Key的统一后缀. 兼容此前的name情况, 不建议使用
+	Select          int           // 选择DB下标, 默认0
 	Cluster         bool          //是否集群
 
 	// cluster参数
@@ -257,6 +261,61 @@ func Slot(key string) uint16 {
 	return crc % CLUSTER_SLOTS_NUMBER
 }
 
-func Keyfix(key interface{}, fix string) string {
-	return key.(string) + "." + fix
+var buffPool = &sync.Pool{
+	New: func() interface{} {
+		return bytes.NewBuffer(make([]byte, 256))
+	},
+}
+
+/*
+第一种形式, 使用key更新key
+*/
+func FillKeyfix1(fix *string, key *string) {
+	buf := buffPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	buf.WriteString(*key)
+	buf.WriteByte('.')
+	buf.WriteString(*fix)
+	*key = buf.String()
+	buffPool.Put(buf)
+}
+
+/*
+第二种形式: 使用keysArgs[0], 更新keysArgs[0]
+*/
+func FillKeyfix2(fix *string, keysArgs []interface{}) {
+	buf := buffPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	buf.WriteString(keysArgs[0].(string))
+	buf.WriteByte('.')
+	buf.WriteString(*fix)
+	keysArgs[0] = buf.String()
+	buffPool.Put(buf)
+}
+
+/*
+第三种形式: 使用keysArgs[0] 更新key
+*/
+func FillKeyfix3(fix *string, key *string, keysArgs []interface{}) {
+	buf := buffPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	buf.WriteString(keysArgs[0].(string))
+	buf.WriteByte('.')
+	buf.WriteString(*fix)
+	*key = buf.String()
+	buffPool.Put(buf)
+}
+
+/*
+第四种形式: 使用keysArgs[0] 更新key与keysArgs[0]
+*/
+func FillKeyfix4(key *string, fix *string, keysArgs []interface{}) {
+	buf := buffPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	buf.WriteString(keysArgs[0].(string))
+	buf.WriteByte('.')
+	buf.WriteString(*fix)
+	*key = buf.String()
+	buffPool.Put(buf)
+	keysArgs[0] = *key
 }

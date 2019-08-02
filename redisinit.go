@@ -50,6 +50,7 @@ func init() {
 				errExceMaxConns = false
 			}
 			keyfix, ok := conf.ElemString(config, "keyfix")
+			_select, ok := conf.ElemInt(config, "select")
 			proxyips, ok := conf.ElemStringMap(config, "proxyips")
 			defalt, ok := conf.ElemBool(config, "default")
 
@@ -67,6 +68,7 @@ func init() {
 				TestIdleTimeout: testIdleTimeout,
 				ErrExceMaxConns: errExceMaxConns,
 				Keyfix:          keyfix,
+				Select:          _select,
 				Cluster:         cluster,
 				Proxyips:        proxyips,
 			}
