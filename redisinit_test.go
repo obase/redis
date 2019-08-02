@@ -1,7 +1,12 @@
 package redis
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
-func TestParseOption(t *testing.T) {
-
+func TestRedisDo(t *testing.T) {
+	r := Get("demo")
+	vl, ok, err := String(r.Do("SET", "abc", "123"))
+	fmt.Println(vl, ok, err)
 }

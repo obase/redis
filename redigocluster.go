@@ -100,10 +100,10 @@ func (rc *redigoCluster) Do(cmd string, keysArgs ...interface{}) (reply interfac
 	if rc.Keyfix != "" {
 		FillKeyfix13(&key, &rc.Keyfix, keysArgs)
 	}
-	reply, err = rc.indexRedis(key).do(cmd, keysArgs...)
+	reply, err = rc.indexRedis(key).do(cmd, keysArgs)
 	if err != nil && IsSlotsError(err) {
 		rc.UpdateClusterIndexes()
-		reply, err = rc.indexRedis(key).do(cmd, keysArgs...)
+		reply, err = rc.indexRedis(key).do(cmd, keysArgs)
 	}
 	return
 
@@ -180,10 +180,10 @@ func (rc *redigoCluster) Eval(script string, keyCount int, keysArgs ...interface
 	if rc.Keyfix != "" {
 		FillKeyfix13(&key, &rc.Keyfix, keysArgs)
 	}
-	reply, err = rc.indexRedis(key).eval(script, keyCount, keysArgs...)
+	reply, err = rc.indexRedis(key).eval(script, keyCount, keysArgs)
 	if err != nil && IsSlotsError(err) {
 		rc.UpdateClusterIndexes()
-		reply, err = rc.indexRedis(key).eval(script, keyCount, keysArgs...)
+		reply, err = rc.indexRedis(key).eval(script, keyCount, keysArgs)
 	}
 	return
 }

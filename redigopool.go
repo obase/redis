@@ -183,6 +183,10 @@ func (p *redigoPool) newRedigoConn() (*redigoConn, error) {
 	if p.Option.Password != "" {
 		_, err = c.Do("AUTH", p.Option.Password)
 	}
+	// 如果不是集群,则支持select
+	if !p.Option.Cluster && p.Option.Select > 0 {
+		_, err = c.Do("SELECT", p.Option.Select)
+	}
 
 	// 创建元素
 	return &redigoConn{
@@ -261,7 +265,7 @@ func (p *redigoPool) Do(cmd string, keysArgs ...interface{}) (reply interface{},
 	}
 	return p.do(cmd, keysArgs)
 }
-func (p *redigoPool) do(cmd string, keysArgs ...interface{}) (reply interface{}, err error) {
+func (p *redigoPool) do(cmd string, keysArgs []interface{}) (reply interface{}, err error) {
 	rc, err := p.Get()
 	if err != nil {
 		return
@@ -404,10 +408,10 @@ func (p *redigoPool) Eval(script string, keyCount int, keysArgs ...interface{}) 
 	if p.Keyfix != "" && len(keysArgs) > 0 {
 		FillKeyfix2(&p.Keyfix, keysArgs)
 	}
-	return p.eval(script, keyCount, keysArgs...)
+	return p.eval(script, keyCount, keysArgs)
 }
 
-func (p *redigoPool) eval(script string, keyCount int, keysArgs ...interface{}) (reply interface{}, err error) {
+func (p *redigoPool) eval(script string, keyCount int, keysArgs []interface{}) (reply interface{}, err error) {
 	rc, err := p.Get()
 	if err != nil {
 		return
