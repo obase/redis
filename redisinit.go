@@ -20,9 +20,6 @@ func init() {
 			cluster, ok := conf.ElemBool(config, "cluster")
 			password, ok := conf.ElemString(config, "password")
 			keepalive, ok := conf.ElemDuration(config, "keepalive")
-			if !ok {
-				keepalive = time.Minute
-			}
 			connectTimeout, ok := conf.ElemDuration(config, "connectTimeout")
 			if !ok {
 				connectTimeout = 30 * time.Second
