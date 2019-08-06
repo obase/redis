@@ -82,26 +82,30 @@ type Redis interface {
 
 /*====================选项设置====================*/
 type Option struct {
+	Key string `json:"key" bson:"key" yaml:"key"`
 	// Conn参数
-	Network        string        // 网络类簇,默认TCP
-	Address        []string      //连接的ip:port, 默认127.0.0.1:6379.
-	Keepalive      time.Duration //KeepAlive的间隔, 默认0不开启keepalive
-	ConnectTimeout time.Duration //连接超时, 默认0不设置
-	ReadTimeout    time.Duration // 读超时, 默认0永远不超时
-	WriteTimeout   time.Duration // 写超时, 默认0永远不超时
-	Password       string        //密码
+	Network        string        `json:"network" bson:"network" yson:"network"`                      // 网络类簇,默认TCP
+	Address        []string      `json:"address" bson:"address" yaml:"address"`                      //连接的ip:port, 默认127.0.0.1:6379.
+	Keepalive      time.Duration `json:"keepalive" bson:"keepalive" yaml:"keepalive"`                //KeepAlive的间隔, 默认0不开启keepalive
+	ConnectTimeout time.Duration `json:"connectTimeout" bson:"connectTimeout" yaml:"connectTimeout"` //连接超时, 默认0不设置
+	ReadTimeout    time.Duration `json:"readTimeout" bson:"readTimeout" yaml:"readTimeout"`          // 读超时, 默认0永远不超时
+	WriteTimeout   time.Duration `json:"writeTimeout" bson:"writeTimeout" yaml:"writeTimeout"`       // 写超时, 默认0永远不超时
+	Password       string        `json:"password" bson:"password" yaml:"password"`                   //密码
 	// Pool参数
-	InitConns       int           //初始链接数, 默认0
-	MaxConns        int           //最大链接数, 默认0永远不限制
-	MaxIdles        int           //最大空闲数, 超出会在用完后自动关闭, 默认为InitConns
-	TestIdleTimeout time.Duration //最大空闲超时, 超出会在获取时执行PING,如果失败则舍弃重建. 默认0表示不处理. 该选项是TestOnBorrow的一种优化
-	ErrExceMaxConns bool          // 达到最大链接数, 是等待还是报错. 默认false等待
-	Keyfix          string        // Key的统一后缀. 兼容此前的name情况, 不建议使用
-	Select          int           // 选择DB下标, 默认0
-	Cluster         bool          //是否集群
+	InitConns       int           `json:"initConns" bson:"initConns" yaml:"initConns"`                   //初始链接数, 默认0
+	MaxConns        int           `json:"maxConns" bson:"maxConns" yaml:"maxConns"`                      //最大链接数, 默认0永远不限制
+	MaxIdles        int           `json:"maxIdles" bson:"maxIdles" yaml:"maxIdles"`                      //最大空闲数, 超出会在用完后自动关闭, 默认为InitConns
+	TestIdleTimeout time.Duration `json:"testIdleTimeout" bson:"testIdleTimeout" yaml:"testIdleTimeout"` //最大空闲超时, 超出会在获取时执行PING,如果失败则舍弃重建. 默认0表示不处理. 该选项是TestOnBorrow的一种优化
+	ErrExceMaxConns bool          `json:"errExceMaxConns" bson:"errExceMaxConns" yaml:"errExceMaxConns"` // 达到最大链接数, 是等待还是报错. 默认false等待
+	Keyfix          string        `json:"keyfix" bson:"keyfix" yaml:"keyfix"`                            // Key的统一后缀. 兼容此前的name情况, 不建议使用
+	Select          int           `json:"select" bson:"select" yaml:"select"`                            // 选择DB下标, 默认0
+	Cluster         bool          `json:"cluster" bson:"cluster" yaml:"cluster"`                         //是否集群
 
 	// cluster参数
-	Proxyips map[string]string //代理IP集合,一般用于本地测试用
+	Proxyips map[string]string `json:"proxyips" bson:"proxyips" yaml:"proxyips"` //代理IP集合,一般用于本地测试用
+
+	// 是否默认
+	Default bool `json:"default" bson:"default" yaml:"default"`
 }
 
 func CloneOption(opt *Option) (ret *Option) {
@@ -150,8 +154,6 @@ var ErrExceedMaxConns = errors.New("excced the max conns")
 
 /*====================操作设置====================*/
 
-var ErrDupKey = errors.New("duplicate client name")
-
 var (
 	//默认
 	Default Redis
@@ -166,38 +168,31 @@ func Get(name string) Redis {
 	return nil
 }
 
-func Setup(name string, gen func(option *Option) (Redis, error), opt *Option, def bool) (err error) {
-	_, ok := Clients[name]
-	if ok {
-		err = ErrDupKey
-		return
+func Setup(opt *Option) (err error) {
+
+	for _, k := range strings.Split(opt.Key, ",") {
+		if _, ok := Clients[k]; ok {
+			err = errors.New("duplicate redis key " + k)
+			return
+		}
 	}
 
-	c, err := gen(MergeOption(opt))
+	var c Redis
+	if opt.Cluster {
+		c, err = newRedigoCluster(MergeOption(opt))
+	} else {
+		c, err = newRedigoPool(MergeOption(opt))
+	}
 	if err != nil {
 		return
 	}
-	for _, k := range strings.Split(name, ",") {
-		if k = strings.TrimSpace(k); len(k) > 0 {
-			Clients[k] = c
-		}
+	for _, k := range strings.Split(opt.Key, ",") {
+		Clients[k] = c
 	}
-	if def {
+	if opt.Default {
 		Default = c
 	}
 	return
-}
-
-func SetupPool(name string, opt *Option, def bool) (err error) {
-	return Setup(name, func(option *Option) (redis Redis, e error) {
-		return newRedigoPool(option)
-	}, opt, def) // 指定具体底层实现
-}
-
-func SetupCluster(name string, opt *Option, def bool) (err error) {
-	return Setup(name, func(option *Option) (redis Redis, e error) {
-		return newRedigoCluster(option)
-	}, opt, def) // 指定具体底层实现
 }
 
 /*====================slots约定====================*/
