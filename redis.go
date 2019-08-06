@@ -130,7 +130,7 @@ func CloneOption(opt *Config) (ret *Config) {
 	return
 }
 
-func MergeOption(opt *Config) (ret *Config) {
+func mergeConfig(opt *Config) (ret *Config) {
 	if opt == nil {
 		ret = &Config{}
 	} else {
@@ -179,9 +179,9 @@ func Setup(opt *Config) (err error) {
 
 	var c Redis
 	if opt.Cluster {
-		c, err = newRedigoCluster(MergeOption(opt))
+		c, err = newRedigoCluster(mergeConfig(opt))
 	} else {
-		c, err = newRedigoPool(MergeOption(opt))
+		c, err = newRedigoPool(mergeConfig(opt))
 	}
 	if err != nil {
 		return

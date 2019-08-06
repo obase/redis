@@ -24,7 +24,7 @@ func TestRedigoCluster_Do(t *testing.T) {
 		InitConns:      1,
 		ConnectTimeout: 2 * time.Second,
 	}
-	cls, err := newRedigoCluster(MergeOption(opt))
+	cls, err := newRedigoCluster(mergeConfig(opt))
 	if err != nil {
 		switch err := err.(type) {
 		case *net.OpError:
@@ -62,7 +62,7 @@ func TestRedigoCluster_Eval(t *testing.T) {
 		MaxIdles:  2,
 		InitConns: 1,
 	}
-	cls, err := newRedigoCluster(MergeOption(opt))
+	cls, err := newRedigoCluster(mergeConfig(opt))
 	if err != nil {
 		t.Fatal(err)
 	}
