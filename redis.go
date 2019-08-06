@@ -166,31 +166,38 @@ func Get(name string) Redis {
 	return nil
 }
 
-func Setup(opt *Config) (err error) {
+func Setup(opt *Config) error {
 
 	for _, k := range strings.Split(opt.Key, ",") {
 		if _, ok := Clients[k]; ok {
-			err = errors.New("duplicate redis key " + k)
-			return
+			return errors.New("duplicate redis key " + k)
 		}
 	}
 
 	var c Redis
+	// 注意: 不能直接将concreate type赋值给interface, 前者为nil时, 后者也不为会nil
 	if opt.Cluster {
-		c, err = newRedigoCluster(mergeConfig(opt))
+		if cp, err := newRedigoCluster(mergeConfig(opt)); err != nil {
+			return err
+		} else if cp != nil {
+			c = cp
+		}
 	} else {
-		c, err = newRedigoPool(mergeConfig(opt))
+		if cc, err := newRedigoPool(mergeConfig(opt)); err != nil {
+			return err
+		} else if cc != nil {
+			c = cc
+		}
 	}
-	if err != nil {
-		return
+	if c != nil {
+		for _, k := range strings.Split(opt.Key, ",") {
+			Clients[k] = c
+		}
+		if opt.Default {
+			Default = c
+		}
 	}
-	for _, k := range strings.Split(opt.Key, ",") {
-		Clients[k] = c
-	}
-	if opt.Default {
-		Default = c
-	}
-	return
+	return nil
 }
 
 /*====================slots约定====================*/

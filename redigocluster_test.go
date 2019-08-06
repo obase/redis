@@ -72,7 +72,7 @@ func TestRedigoCluster_Eval(t *testing.T) {
 }
 
 func TestKeyfix(t *testing.T) {
-	c := Get("mqdb")
+	c := Get("demo")
 	f, err := c.Do("SET", "key", "don't do it")
 	if err != nil {
 		t.Fatal(f)
