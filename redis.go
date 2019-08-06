@@ -168,7 +168,8 @@ func Get(name string) Redis {
 
 func Setup(opt *Config) error {
 
-	for _, k := range strings.Split(opt.Key, ",") {
+	keys := strings.Split(opt.Key, ",")
+	for _, k := range keys {
 		if _, ok := Clients[k]; ok {
 			return errors.New("duplicate redis key " + k)
 		}
@@ -190,7 +191,7 @@ func Setup(opt *Config) error {
 		}
 	}
 	if c != nil {
-		for _, k := range strings.Split(opt.Key, ",") {
+		for _, k := range keys {
 			Clients[k] = c
 		}
 		if opt.Default {
