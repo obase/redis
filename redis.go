@@ -1,10 +1,8 @@
 package redis
 
 import (
-	"bytes"
 	"errors"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -256,61 +254,31 @@ func Slot(key string) uint16 {
 	return crc % CLUSTER_SLOTS_NUMBER
 }
 
-var buffPool = &sync.Pool{
-	New: func() interface{} {
-		return bytes.NewBuffer(make([]byte, 256))
-	},
-}
-
 /*
 第一种形式, 使用key更新key
 */
 func FillKeyfix1(fix *string, key *string) {
-	buf := buffPool.Get().(*bytes.Buffer)
-	buf.Reset()
-	buf.WriteString(*key)
-	buf.WriteByte('.')
-	buf.WriteString(*fix)
-	*key = buf.String()
-	buffPool.Put(buf)
+	*key = *key + "." + *fix
 }
 
 /*
 第二种形式: 使用keysArgs[0], 更新keysArgs[0]
 */
 func FillKeyfix2(fix *string, keysArgs []interface{}) {
-	buf := buffPool.Get().(*bytes.Buffer)
-	buf.Reset()
-	buf.WriteString(keysArgs[0].(string))
-	buf.WriteByte('.')
-	buf.WriteString(*fix)
-	keysArgs[0] = buf.String()
-	buffPool.Put(buf)
+	keysArgs[0] = keysArgs[0].(string) + "." + *fix
 }
 
 /*
 第三种形式: 使用keysArgs[0] 更新key
 */
 func FillKeyfix3(fix *string, key *string, keysArgs []interface{}) {
-	buf := buffPool.Get().(*bytes.Buffer)
-	buf.Reset()
-	buf.WriteString(keysArgs[0].(string))
-	buf.WriteByte('.')
-	buf.WriteString(*fix)
-	*key = buf.String()
-	buffPool.Put(buf)
+	*key = keysArgs[0].(string) + "." + *fix
 }
 
 /*
 第四种形式: 使用keysArgs[0] 更新key与keysArgs[0]
 */
 func FillKeyfix4(key *string, fix *string, keysArgs []interface{}) {
-	buf := buffPool.Get().(*bytes.Buffer)
-	buf.Reset()
-	buf.WriteString(keysArgs[0].(string))
-	buf.WriteByte('.')
-	buf.WriteString(*fix)
-	*key = buf.String()
-	buffPool.Put(buf)
+	*key = keysArgs[0].(string) + "." + *fix
 	keysArgs[0] = *key
 }
