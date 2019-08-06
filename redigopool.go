@@ -25,7 +25,7 @@ type redigoConn struct {
 }
 
 type redigoPool struct {
-	*Option
+	*Config
 	testIdleSeconds int64
 
 	Mutex *sync.Mutex
@@ -39,9 +39,9 @@ type redigoPool struct {
 	Tfree *redigoConn //空闲链表的尾, 每次都从尾部取用
 }
 
-func newRedigoPool(opt *Option) (*redigoPool, error) {
+func newRedigoPool(opt *Config) (*redigoPool, error) {
 	p := &redigoPool{
-		Option:          opt,
+		Config:          opt,
 		testIdleSeconds: int64(opt.TestIdleTimeout.Seconds()),
 		Mutex:           new(sync.Mutex),
 		Hused:           new(redigoConn),
@@ -166,26 +166,26 @@ func (l *redigoPool) Back(conn *redigoConn) {
 
 func (p *redigoPool) newRedigoConn() (*redigoConn, error) {
 
-	conn, err := net.DialTimeout(p.Option.Network, p.Option.Address[0], p.Option.ConnectTimeout)
+	conn, err := net.DialTimeout(p.Config.Network, p.Config.Address[0], p.Config.ConnectTimeout)
 	if err != nil {
 		return nil, err
 	}
 	tcp := conn.(*net.TCPConn)
 
-	if p.Option.Keepalive > 0 {
+	if p.Config.Keepalive > 0 {
 		tcp.SetKeepAlive(true)
-		tcp.SetKeepAlivePeriod(p.Option.Keepalive)
+		tcp.SetKeepAlivePeriod(p.Config.Keepalive)
 	}
 	if err != nil {
 		return nil, err
 	}
-	c := redigo.NewConn(tcp, p.Option.ReadTimeout, p.Option.WriteTimeout)
-	if p.Option.Password != "" {
-		_, err = c.Do("AUTH", p.Option.Password)
+	c := redigo.NewConn(tcp, p.Config.ReadTimeout, p.Config.WriteTimeout)
+	if p.Config.Password != "" {
+		_, err = c.Do("AUTH", p.Config.Password)
 	}
 	// 如果不是集群,则支持select
-	if !p.Option.Cluster && p.Option.Select > 0 {
-		_, err = c.Do("SELECT", p.Option.Select)
+	if !p.Config.Cluster && p.Config.Select > 0 {
+		_, err = c.Do("SELECT", p.Config.Select)
 	}
 
 	// 创建元素
@@ -199,8 +199,8 @@ func (p *redigoPool) newRedigoConn() (*redigoConn, error) {
 func (p *redigoPool) Get() (ret *redigoConn, err error) {
 	for {
 		p.Mutex.Lock()
-		if p.Option.MaxConns > 0 {
-			for p.Nfree == 0 && p.Nalls >= p.Option.MaxConns {
+		if p.Config.MaxConns > 0 {
+			for p.Nfree == 0 && p.Nalls >= p.Config.MaxConns {
 				if p.ErrExceMaxConns {
 					p.Mutex.Unlock()
 					return nil, ErrExceedMaxConns

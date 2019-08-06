@@ -81,7 +81,7 @@ type Redis interface {
 }
 
 /*====================选项设置====================*/
-type Option struct {
+type Config struct {
 	Key string `json:"key" bson:"key" yaml:"key"`
 	// Conn参数
 	Network        string        `json:"network" bson:"network" yson:"network"`                      // 网络类簇,默认TCP
@@ -108,8 +108,8 @@ type Option struct {
 	Default bool `json:"default" bson:"default" yaml:"default"`
 }
 
-func CloneOption(opt *Option) (ret *Option) {
-	ret = new(Option)
+func CloneOption(opt *Config) (ret *Config) {
+	ret = new(Config)
 	ret.Network = opt.Network
 	ret.Address = opt.Address
 	ret.Keepalive = opt.Keepalive
@@ -130,9 +130,9 @@ func CloneOption(opt *Option) (ret *Option) {
 	return
 }
 
-func MergeOption(opt *Option) (ret *Option) {
+func MergeOption(opt *Config) (ret *Config) {
 	if opt == nil {
-		ret = &Option{}
+		ret = &Config{}
 	} else {
 		ret = opt
 	}
@@ -168,7 +168,7 @@ func Get(name string) Redis {
 	return nil
 }
 
-func Setup(opt *Option) (err error) {
+func Setup(opt *Config) (err error) {
 
 	for _, k := range strings.Split(opt.Key, ",") {
 		if _, ok := Clients[k]; ok {

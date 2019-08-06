@@ -9,7 +9,7 @@ import (
 )
 
 func TestNewRedisPool(t *testing.T) {
-	opt := &Option{
+	opt := &Config{
 		Network:         "tcp",
 		Address:         []string{"127.0.0.1:6379"},
 		MaxConns:        16,
@@ -91,7 +91,7 @@ func TestRedigoPool_Tx(t *testing.T) {
 }
 
 func TestRedigoPool_Pub(t *testing.T) {
-	opt := &Option{
+	opt := &Config{
 		Network:         "tcp",
 		Address:         []string{"127.0.0.1:6379"},
 		MaxConns:        1,
@@ -121,7 +121,7 @@ func TestRedigoPool_Sub(t *testing.T) {
 }
 
 func TestRedigoPool_Do(t *testing.T) {
-	opt := &Option{
+	opt := &Config{
 		Network:         "tcp",
 		Address:         []string{"127.0.0.1:6379"},
 		MaxConns:        1,

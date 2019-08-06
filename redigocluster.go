@@ -17,16 +17,16 @@ var (
 )
 
 type redigoCluster struct {
-	*Option
+	*Config
 	RWLock *sync.RWMutex
 	Slots  []*SlotInfo
 	Pools  []*redigoPool
 	Index  []*redigoPool
 }
 
-func newRedigoCluster(opt *Option) (*redigoCluster, error) {
+func newRedigoCluster(opt *Config) (*redigoCluster, error) {
 	ret := &redigoCluster{
-		Option: opt,
+		Config: opt,
 		RWLock: new(sync.RWMutex),
 	}
 	err := ret.UpdateClusterIndexes()
@@ -40,7 +40,7 @@ func newRedigoCluster(opt *Option) (*redigoCluster, error) {
 func (rc *redigoCluster) UpdateClusterIndexes() (err error) {
 
 	// 获取最新的slots并比较是否发生变化
-	slots, err := QueryClusterSlots(rc.Option)
+	slots, err := QueryClusterSlots(rc.Config)
 	if err != nil || !IsSlotsChanged(rc.Slots, slots) {
 		return
 	}
@@ -58,7 +58,7 @@ func (rc *redigoCluster) UpdateClusterIndexes() (err error) {
 	}
 	for i, s := range slots {
 
-		o := CloneOption(rc.Option)
+		o := CloneOption(rc.Config)
 		o.Address = []string{s.Address}
 
 		rc.Pools[i], err = newRedigoPool(o)
@@ -206,7 +206,7 @@ type SlotInfo struct {
 	Address string
 }
 
-func QueryClusterSlots(opt *Option) ([]*SlotInfo, error) {
+func QueryClusterSlots(opt *Config) ([]*SlotInfo, error) {
 
 	var rc redigo.Conn
 	var err error

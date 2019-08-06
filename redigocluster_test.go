@@ -9,7 +9,7 @@ import (
 )
 
 func TestRedigoCluster_Do(t *testing.T) {
-	opt := &Option{
+	opt := &Config{
 		Proxyips: map[string]string{
 			"172.31.0.63": "120.92.144.252",
 		},
@@ -53,7 +53,7 @@ func TestRedigoCluster_Do(t *testing.T) {
 }
 
 func TestRedigoCluster_Eval(t *testing.T) {
-	opt := &Option{
+	opt := &Config{
 		Address: []string{
 			"192.168.2.11:6379",
 		},
