@@ -108,7 +108,7 @@ type Config struct {
 	Default bool `json:"default" bson:"default" yaml:"default"`
 }
 
-func CloneOption(opt *Config) (ret *Config) {
+func cloneConfig(opt *Config) (ret *Config) {
 	ret = new(Config)
 	ret.Network = opt.Network
 	ret.Address = opt.Address

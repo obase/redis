@@ -58,7 +58,7 @@ func (rc *redigoCluster) UpdateClusterIndexes() (err error) {
 	}
 	for i, s := range slots {
 
-		o := CloneOption(rc.Config)
+		o := cloneConfig(rc.Config)
 		o.Address = []string{s.Address}
 
 		rc.Pools[i], err = newRedigoPool(o)
