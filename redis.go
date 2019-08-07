@@ -96,6 +96,7 @@ func cloneConfig(opt *Config) (ret *Config) {
 	ret.TestIdleTimeout = opt.TestIdleTimeout
 	ret.ErrExceMaxConns = opt.ErrExceMaxConns
 	ret.Keyfix = opt.Keyfix
+	ret.Select = opt.Select
 	ret.Cluster = opt.Cluster // 下发集群信息
 
 	ret.Proxyips = opt.Proxyips
