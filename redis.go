@@ -26,32 +26,6 @@ type Scanner interface {
 	Scan(reply interface{}) (interface{}, error)
 }
 
-// func Bool(reply interface{},err error) (*bool, error)
-//func Int(reply interface{}, err error) (*int, error)
-//func Int64(reply interface{}, verr error) (*int64, error)
-//func Float64(reply interface{},err error) (*float64, error)
-// func String(reply interface{}, err error) (*string, error)
-//func Bytes(reply interface{}, err error) ([]byte, error)
-
-// func IntSlice(reply interface{}, err error) ([]int, error)
-// func Int64Slice(reply interface{}, err error) ([]int64, error)
-// func Float64Slice(reply interface{}, err error) ([]float64, error)
-// func StringSlice(reply interface{}, err error) ([]string, error)
-// func BytesSlice(reply interface{}, err error) ([][]byte, error)
-//func ValueSlice(reply interface{}, err error) ([]interface{}, error)
-//func ValueScoreSlice(reply interface{}, err error)([]*ValueScore, error) // 针对zset with scores的处理
-
-//func IntMap(result interface{}, err error) (map[string]int, error)
-// func Int64Map(result interface{}, err error) (map[string]int64, error)
-// func Float64Map(result interface{}, err error) (map[string]float64, error)
-// func StringMap(result interface{}, err error) (map[string]string, error)
-// func ValueMap(result interface{}, err error) (map[string]interface{}, error)
-
-// func Scan(src interface{}, err error, sc Scanner)(interface{}, error)
-//func ScanSlice(src []interface{}, dest ...interface{}) ([]interface{}, error)
-//func ScanStruct(src []interface{}, dest interface{}) error
-// func ScanStructSlice(src []interface{}, dest interface{}, fieldNames ...string) error
-
 /*====================操作接口====================*/
 type OP interface {
 	Do(cmd string, keysArgs ...interface{}) (err error)
