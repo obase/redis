@@ -261,7 +261,7 @@ func FillKeyfix3(fix *string, key *string, keysArgs []interface{}) {
 /*
 第四种形式: 使用keysArgs[0] 更新key与keysArgs[0]
 */
-func FillKeyfix4(key *string, fix *string, keysArgs []interface{}) {
+func FillKeyfix4(fix *string, key *string, keysArgs []interface{}) {
 	*key = keysArgs[0].(string) + "." + *fix
 	keysArgs[0] = *key
 }
