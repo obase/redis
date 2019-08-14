@@ -1,10 +1,8 @@
 package redis
 
 import (
-	"bytes"
 	"errors"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -27,32 +25,6 @@ type ValueScore struct {
 type Scanner interface {
 	Scan(reply interface{}) (interface{}, error)
 }
-
-// func Bool(reply interface{},err error) (*bool, error)
-//func Int(reply interface{}, err error) (*int, error)
-//func Int64(reply interface{}, verr error) (*int64, error)
-//func Float64(reply interface{},err error) (*float64, error)
-// func String(reply interface{}, err error) (*string, error)
-//func Bytes(reply interface{}, err error) ([]byte, error)
-
-// func IntSlice(reply interface{}, err error) ([]int, error)
-// func Int64Slice(reply interface{}, err error) ([]int64, error)
-// func Float64Slice(reply interface{}, err error) ([]float64, error)
-// func StringSlice(reply interface{}, err error) ([]string, error)
-// func BytesSlice(reply interface{}, err error) ([][]byte, error)
-//func ValueSlice(reply interface{}, err error) ([]interface{}, error)
-//func ValueScoreSlice(reply interface{}, err error)([]*ValueScore, error) // 针对zset with scores的处理
-
-//func IntMap(result interface{}, err error) (map[string]int, error)
-// func Int64Map(result interface{}, err error) (map[string]int64, error)
-// func Float64Map(result interface{}, err error) (map[string]float64, error)
-// func StringMap(result interface{}, err error) (map[string]string, error)
-// func ValueMap(result interface{}, err error) (map[string]interface{}, error)
-
-// func Scan(src interface{}, err error, sc Scanner)(interface{}, error)
-//func ScanSlice(src []interface{}, dest ...interface{}) ([]interface{}, error)
-//func ScanStruct(src []interface{}, dest interface{}) error
-// func ScanStructSlice(src []interface{}, dest interface{}, fieldNames ...string) error
 
 /*====================操作接口====================*/
 type OP interface {
@@ -81,31 +53,35 @@ type Redis interface {
 }
 
 /*====================选项设置====================*/
-type Option struct {
+type Config struct {
+	Key string `json:"key" bson:"key" yaml:"key"`
 	// Conn参数
-	Network        string        // 网络类簇,默认TCP
-	Address        []string      //连接的ip:port, 默认127.0.0.1:6379.
-	Keepalive      time.Duration //KeepAlive的间隔, 默认0不开启keepalive
-	ConnectTimeout time.Duration //连接超时, 默认0不设置
-	ReadTimeout    time.Duration // 读超时, 默认0永远不超时
-	WriteTimeout   time.Duration // 写超时, 默认0永远不超时
-	Password       string        //密码
+	Network        string        `json:"network" bson:"network" yson:"network"`                      // 网络类簇,默认TCP
+	Address        []string      `json:"address" bson:"address" yaml:"address"`                      //连接的ip:port, 默认127.0.0.1:6379.
+	Keepalive      time.Duration `json:"keepalive" bson:"keepalive" yaml:"keepalive"`                //KeepAlive的间隔, 默认0不开启keepalive
+	ConnectTimeout time.Duration `json:"connectTimeout" bson:"connectTimeout" yaml:"connectTimeout"` //连接超时, 默认0不设置
+	ReadTimeout    time.Duration `json:"readTimeout" bson:"readTimeout" yaml:"readTimeout"`          // 读超时, 默认0永远不超时
+	WriteTimeout   time.Duration `json:"writeTimeout" bson:"writeTimeout" yaml:"writeTimeout"`       // 写超时, 默认0永远不超时
+	Password       string        `json:"password" bson:"password" yaml:"password"`                   //密码
 	// Pool参数
-	InitConns       int           //初始链接数, 默认0
-	MaxConns        int           //最大链接数, 默认0永远不限制
-	MaxIdles        int           //最大空闲数, 超出会在用完后自动关闭, 默认为InitConns
-	TestIdleTimeout time.Duration //最大空闲超时, 超出会在获取时执行PING,如果失败则舍弃重建. 默认0表示不处理. 该选项是TestOnBorrow的一种优化
-	ErrExceMaxConns bool          // 达到最大链接数, 是等待还是报错. 默认false等待
-	Keyfix          string        // Key的统一后缀. 兼容此前的name情况, 不建议使用
-	Select          int           // 选择DB下标, 默认0
-	Cluster         bool          //是否集群
+	InitConns       int           `json:"initConns" bson:"initConns" yaml:"initConns"`                   //初始链接数, 默认0
+	MaxConns        int           `json:"maxConns" bson:"maxConns" yaml:"maxConns"`                      //最大链接数, 默认0永远不限制
+	MaxIdles        int           `json:"maxIdles" bson:"maxIdles" yaml:"maxIdles"`                      //最大空闲数, 超出会在用完后自动关闭, 默认为InitConns
+	TestIdleTimeout time.Duration `json:"testIdleTimeout" bson:"testIdleTimeout" yaml:"testIdleTimeout"` //最大空闲超时, 超出会在获取时执行PING,如果失败则舍弃重建. 默认0表示不处理. 该选项是TestOnBorrow的一种优化
+	ErrExceMaxConns bool          `json:"errExceMaxConns" bson:"errExceMaxConns" yaml:"errExceMaxConns"` // 达到最大链接数, 是等待还是报错. 默认false等待
+	Keyfix          string        `json:"keyfix" bson:"keyfix" yaml:"keyfix"`                            // Key的统一后缀. 兼容此前的name情况, 不建议使用
+	Select          int           `json:"select" bson:"select" yaml:"select"`                            // 选择DB下标, 默认0
+	Cluster         bool          `json:"cluster" bson:"cluster" yaml:"cluster"`                         //是否集群
 
 	// cluster参数
-	Proxyips map[string]string //代理IP集合,一般用于本地测试用
+	Proxyips map[string]string `json:"proxyips" bson:"proxyips" yaml:"proxyips"` //代理IP集合,一般用于本地测试用
+
+	// 是否默认
+	Default bool `json:"default" bson:"default" yaml:"default"`
 }
 
-func CloneOption(opt *Option) (ret *Option) {
-	ret = new(Option)
+func cloneConfig(opt *Config) (ret *Config) {
+	ret = new(Config)
 	ret.Network = opt.Network
 	ret.Address = opt.Address
 	ret.Keepalive = opt.Keepalive
@@ -120,15 +96,16 @@ func CloneOption(opt *Option) (ret *Option) {
 	ret.TestIdleTimeout = opt.TestIdleTimeout
 	ret.ErrExceMaxConns = opt.ErrExceMaxConns
 	ret.Keyfix = opt.Keyfix
+	ret.Select = opt.Select
 	ret.Cluster = opt.Cluster // 下发集群信息
 
 	ret.Proxyips = opt.Proxyips
 	return
 }
 
-func MergeOption(opt *Option) (ret *Option) {
+func mergeConfig(opt *Config) (ret *Config) {
 	if opt == nil {
-		ret = &Option{}
+		ret = &Config{}
 	} else {
 		ret = opt
 	}
@@ -150,8 +127,6 @@ var ErrExceedMaxConns = errors.New("excced the max conns")
 
 /*====================操作设置====================*/
 
-var ErrDupKey = errors.New("duplicate client name")
-
 var (
 	//默认
 	Default Redis
@@ -166,38 +141,39 @@ func Get(name string) Redis {
 	return nil
 }
 
-func Setup(name string, gen func(option *Option) (Redis, error), opt *Option, def bool) (err error) {
-	_, ok := Clients[name]
-	if ok {
-		err = ErrDupKey
-		return
-	}
+func Setup(opt *Config) error {
 
-	c, err := gen(MergeOption(opt))
-	if err != nil {
-		return
-	}
-	for _, k := range strings.Split(name, ",") {
-		if k = strings.TrimSpace(k); len(k) > 0 {
-			Clients[k] = c
+	keys := strings.Split(opt.Key, ",")
+	for _, k := range keys {
+		if _, ok := Clients[k]; ok {
+			return errors.New("duplicate redis key " + k)
 		}
 	}
-	if def {
-		Default = c
+
+	var c Redis
+	// 注意: 不能直接将concreate type赋值给interface, 前者为nil时, 后者也不为会nil
+	if opt.Cluster {
+		if cp, err := newRedigoCluster(mergeConfig(opt)); err != nil {
+			return err
+		} else if cp != nil {
+			c = cp
+		}
+	} else {
+		if cc, err := newRedigoPool(mergeConfig(opt)); err != nil {
+			return err
+		} else if cc != nil {
+			c = cc
+		}
 	}
-	return
-}
-
-func SetupPool(name string, opt *Option, def bool) (err error) {
-	return Setup(name, func(option *Option) (redis Redis, e error) {
-		return newRedigoPool(option)
-	}, opt, def) // 指定具体底层实现
-}
-
-func SetupCluster(name string, opt *Option, def bool) (err error) {
-	return Setup(name, func(option *Option) (redis Redis, e error) {
-		return newRedigoCluster(option)
-	}, opt, def) // 指定具体底层实现
+	if c != nil {
+		for _, k := range keys {
+			Clients[k] = c
+		}
+		if opt.Default {
+			Default = c
+		}
+	}
+	return nil
 }
 
 /*====================slots约定====================*/
@@ -261,61 +237,31 @@ func Slot(key string) uint16 {
 	return crc % CLUSTER_SLOTS_NUMBER
 }
 
-var buffPool = &sync.Pool{
-	New: func() interface{} {
-		return bytes.NewBuffer(make([]byte, 256))
-	},
-}
-
 /*
 第一种形式, 使用key更新key
 */
 func FillKeyfix1(fix *string, key *string) {
-	buf := buffPool.Get().(*bytes.Buffer)
-	buf.Reset()
-	buf.WriteString(*key)
-	buf.WriteByte('.')
-	buf.WriteString(*fix)
-	*key = buf.String()
-	buffPool.Put(buf)
+	*key = *key + "." + *fix
 }
 
 /*
 第二种形式: 使用keysArgs[0], 更新keysArgs[0]
 */
 func FillKeyfix2(fix *string, keysArgs []interface{}) {
-	buf := buffPool.Get().(*bytes.Buffer)
-	buf.Reset()
-	buf.WriteString(keysArgs[0].(string))
-	buf.WriteByte('.')
-	buf.WriteString(*fix)
-	keysArgs[0] = buf.String()
-	buffPool.Put(buf)
+	keysArgs[0] = keysArgs[0].(string) + "." + *fix
 }
 
 /*
 第三种形式: 使用keysArgs[0] 更新key
 */
 func FillKeyfix3(fix *string, key *string, keysArgs []interface{}) {
-	buf := buffPool.Get().(*bytes.Buffer)
-	buf.Reset()
-	buf.WriteString(keysArgs[0].(string))
-	buf.WriteByte('.')
-	buf.WriteString(*fix)
-	*key = buf.String()
-	buffPool.Put(buf)
+	*key = keysArgs[0].(string) + "." + *fix
 }
 
 /*
 第四种形式: 使用keysArgs[0] 更新key与keysArgs[0]
 */
-func FillKeyfix4(key *string, fix *string, keysArgs []interface{}) {
-	buf := buffPool.Get().(*bytes.Buffer)
-	buf.Reset()
-	buf.WriteString(keysArgs[0].(string))
-	buf.WriteByte('.')
-	buf.WriteString(*fix)
-	*key = buf.String()
-	buffPool.Put(buf)
+func FillKeyfix4(fix *string, key *string, keysArgs []interface{}) {
+	*key = keysArgs[0].(string) + "." + *fix
 	keysArgs[0] = *key
 }

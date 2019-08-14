@@ -9,7 +9,7 @@ import (
 )
 
 func TestRedigoCluster_Do(t *testing.T) {
-	opt := &Option{
+	opt := &Config{
 		Proxyips: map[string]string{
 			"172.31.0.63": "120.92.144.252",
 		},
@@ -24,7 +24,7 @@ func TestRedigoCluster_Do(t *testing.T) {
 		InitConns:      1,
 		ConnectTimeout: 2 * time.Second,
 	}
-	cls, err := newRedigoCluster(MergeOption(opt))
+	cls, err := newRedigoCluster(mergeConfig(opt))
 	if err != nil {
 		switch err := err.(type) {
 		case *net.OpError:
@@ -53,7 +53,7 @@ func TestRedigoCluster_Do(t *testing.T) {
 }
 
 func TestRedigoCluster_Eval(t *testing.T) {
-	opt := &Option{
+	opt := &Config{
 		Address: []string{
 			"192.168.2.11:6379",
 		},
@@ -62,7 +62,7 @@ func TestRedigoCluster_Eval(t *testing.T) {
 		MaxIdles:  2,
 		InitConns: 1,
 	}
-	cls, err := newRedigoCluster(MergeOption(opt))
+	cls, err := newRedigoCluster(mergeConfig(opt))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -72,7 +72,7 @@ func TestRedigoCluster_Eval(t *testing.T) {
 }
 
 func TestKeyfix(t *testing.T) {
-	c := Get("mqdb")
+	c := Get("demo")
 	f, err := c.Do("SET", "key", "don't do it")
 	if err != nil {
 		t.Fatal(f)

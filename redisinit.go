@@ -20,9 +20,6 @@ func init() {
 			cluster, ok := conf.ElemBool(config, "cluster")
 			password, ok := conf.ElemString(config, "password")
 			keepalive, ok := conf.ElemDuration(config, "keepalive")
-			if !ok {
-				keepalive = time.Minute
-			}
 			connectTimeout, ok := conf.ElemDuration(config, "connectTimeout")
 			if !ok {
 				connectTimeout = 30 * time.Second
@@ -54,7 +51,8 @@ func init() {
 			proxyips, ok := conf.ElemStringMap(config, "proxyips")
 			defalt, ok := conf.ElemBool(config, "default")
 
-			option := &Option{
+			option := &Config{
+				Key:             key,
 				Network:         "tcp",
 				Address:         address,
 				Keepalive:       keepalive,
@@ -71,16 +69,11 @@ func init() {
 				Select:          _select,
 				Cluster:         cluster,
 				Proxyips:        proxyips,
+				Default:         defalt,
 			}
 
-			if cluster {
-				if err := SetupCluster(key, option, defalt); err != nil {
-					panic(err)
-				}
-			} else {
-				if err := SetupPool(key, option, defalt); err != nil {
-					panic(err)
-				}
+			if err := Setup(option); err != nil {
+				panic(err)
 			}
 		}
 	}

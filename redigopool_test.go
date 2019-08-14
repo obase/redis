@@ -9,7 +9,7 @@ import (
 )
 
 func TestNewRedisPool(t *testing.T) {
-	opt := &Option{
+	opt := &Config{
 		Network:         "tcp",
 		Address:         []string{"127.0.0.1:6379"},
 		MaxConns:        16,
@@ -17,7 +17,7 @@ func TestNewRedisPool(t *testing.T) {
 		InitConns:       1,
 		TestIdleTimeout: 1 * time.Minute,
 	}
-	pool, err := newRedigoPool(MergeOption(opt))
+	pool, err := newRedigoPool(mergeConfig(opt))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -91,7 +91,7 @@ func TestRedigoPool_Tx(t *testing.T) {
 }
 
 func TestRedigoPool_Pub(t *testing.T) {
-	opt := &Option{
+	opt := &Config{
 		Network:         "tcp",
 		Address:         []string{"127.0.0.1:6379"},
 		MaxConns:        1,
@@ -99,7 +99,7 @@ func TestRedigoPool_Pub(t *testing.T) {
 		InitConns:       1,
 		TestIdleTimeout: 1 * time.Minute,
 	}
-	p, err := newRedigoPool(MergeOption(opt))
+	p, err := newRedigoPool(mergeConfig(opt))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -121,7 +121,7 @@ func TestRedigoPool_Sub(t *testing.T) {
 }
 
 func TestRedigoPool_Do(t *testing.T) {
-	opt := &Option{
+	opt := &Config{
 		Network:         "tcp",
 		Address:         []string{"127.0.0.1:6379"},
 		MaxConns:        1,
@@ -129,7 +129,7 @@ func TestRedigoPool_Do(t *testing.T) {
 		InitConns:       1,
 		TestIdleTimeout: 1 * time.Minute,
 	}
-	p, err := newRedigoPool(MergeOption(opt))
+	p, err := newRedigoPool(mergeConfig(opt))
 	if err != nil {
 		t.Fatal(err)
 	}

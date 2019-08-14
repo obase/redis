@@ -17,16 +17,16 @@ var (
 )
 
 type redigoCluster struct {
-	*Option
+	*Config
 	RWLock *sync.RWMutex
 	Slots  []*SlotInfo
 	Pools  []*redigoPool
 	Index  []*redigoPool
 }
 
-func newRedigoCluster(opt *Option) (*redigoCluster, error) {
+func newRedigoCluster(opt *Config) (*redigoCluster, error) {
 	ret := &redigoCluster{
-		Option: opt,
+		Config: opt,
 		RWLock: new(sync.RWMutex),
 	}
 	err := ret.UpdateClusterIndexes()
@@ -40,7 +40,7 @@ func newRedigoCluster(opt *Option) (*redigoCluster, error) {
 func (rc *redigoCluster) UpdateClusterIndexes() (err error) {
 
 	// 获取最新的slots并比较是否发生变化
-	slots, err := QueryClusterSlots(rc.Option)
+	slots, err := QueryClusterSlots(rc.Config)
 	if err != nil || !IsSlotsChanged(rc.Slots, slots) {
 		return
 	}
@@ -58,7 +58,7 @@ func (rc *redigoCluster) UpdateClusterIndexes() (err error) {
 	}
 	for i, s := range slots {
 
-		o := CloneOption(rc.Option)
+		o := cloneConfig(rc.Config)
 		o.Address = []string{s.Address}
 
 		rc.Pools[i], err = newRedigoPool(o)
@@ -99,6 +99,8 @@ func (rc *redigoCluster) Do(cmd string, keysArgs ...interface{}) (reply interfac
 	var key string
 	if rc.Keyfix != "" {
 		FillKeyfix4(&rc.Keyfix, &key, keysArgs)
+	} else {
+		key = keysArgs[0].(string)
 	}
 	reply, err = rc.indexRedis(key).do(cmd, keysArgs)
 	if err != nil && IsSlotsError(err) {
@@ -118,6 +120,8 @@ func (rc *redigoCluster) Pi(bf Batch, keysArgs ...interface{}) (reply []interfac
 	var key string
 	if rc.Keyfix != "" {
 		FillKeyfix3(&rc.Keyfix, &key, keysArgs)
+	} else {
+		key = keysArgs[0].(string)
 	}
 	reply, err = rc.indexRedis(key).Pi(bf, keysArgs...)
 	if err != nil && IsSlotsError(err) {
@@ -135,6 +139,8 @@ func (rc *redigoCluster) Tx(bf Batch, keysArgs ...interface{}) (reply []interfac
 	var key string
 	if rc.Keyfix != "" {
 		FillKeyfix3(&rc.Keyfix, &key, keysArgs)
+	} else {
+		key = keysArgs[0].(string)
 	}
 	reply, err = rc.indexRedis(key).Tx(bf, keysArgs...)
 	if err != nil && IsSlotsError(err) {
@@ -179,6 +185,8 @@ func (rc *redigoCluster) Eval(script string, keyCount int, keysArgs ...interface
 	var key string
 	if rc.Keyfix != "" {
 		FillKeyfix4(&rc.Keyfix, &key, keysArgs)
+	} else {
+		key = keysArgs[0].(string)
 	}
 	reply, err = rc.indexRedis(key).eval(script, keyCount, keysArgs)
 	if err != nil && IsSlotsError(err) {
@@ -206,7 +214,7 @@ type SlotInfo struct {
 	Address string
 }
 
-func QueryClusterSlots(opt *Option) ([]*SlotInfo, error) {
+func QueryClusterSlots(opt *Config) ([]*SlotInfo, error) {
 
 	var rc redigo.Conn
 	var err error
