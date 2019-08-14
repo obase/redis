@@ -349,6 +349,40 @@ func Scan(sc Scanner, src interface{}, err error) (interface{}, error)
 - err: 返回错误
 ```
 
+- func AcquireLock
+```
+// AcquireLock 获取指定名字的锁，如果此名字的所未生成，则会自动生成一个锁，
+// 如果已生成，会返回现有的锁
+// name: 锁的名字
+// options:
+//     第一个参数：持有锁的最大时间，默认8s, 字符串，格式如：1s、1m
+//     第二个参数：获取锁的尝试次数，默认32次, 整数
+//     第三个参数：获取锁的间隔时间，默认500ms，字符串，格式如：1s、1m
+//     第四个参数：redis连接池的key值，如果不传，默认将使用mqdb, 字符串
+func AcquireLock(key string, options ...interface{}) *Mutex 
+```
+创建Redis分布式锁, 主要是兼容旧828哪套
+
+- type Mutex
+```
+type Mutex struct {
+	key   string        // redis locker key
+	ex    time.Duration // 第一个参数：持有锁的最大时间，默认8s, 字符串，格式如：1s、1m
+	tries int           // 第二个参数：获取锁的尝试次数，默认32次, 整数
+	delay time.Duration // 第三个参数：获取锁的间隔时间，默认500ms，字符串，格式如：1s、1m
+	pk    string        // 第四个参数：redis连接池的key值，如果不传，默认将使用mqdb, 字符串
+	value string        // 锁有惟一键值
+
+	redis Redis
+}
+```
+
+- func NewMutex
+```
+func NewMutex(key string, ex time.Duration, tries int, delay time.Duration, pk string) *Mutex
+```
+创建Redis分布式锁
+
 # Examples
 ```
 func TestRedisDo(t *testing.T) {
