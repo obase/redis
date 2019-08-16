@@ -18,16 +18,15 @@ var (
 
 type redigoCluster struct {
 	*Config
-	RWLock *sync.RWMutex
-	Slots  []*SlotInfo
-	Pools  []*redigoPool
-	Index  []*redigoPool
+	sync.RWMutex
+	Slots []*SlotInfo
+	Pools []*redigoPool
+	Index []*redigoPool
 }
 
 func newRedigoCluster(opt *Config) (*redigoCluster, error) {
 	ret := &redigoCluster{
 		Config: opt,
-		RWLock: new(sync.RWMutex),
 	}
 	err := ret.UpdateClusterIndexes()
 	if err != nil {
@@ -45,7 +44,7 @@ func (rc *redigoCluster) UpdateClusterIndexes() (err error) {
 		return
 	}
 
-	rc.RWLock.Lock()
+	rc.RWMutex.Lock()
 	// 清除旧的连接
 	rc.Close()
 	// 重用旧的内存
@@ -67,7 +66,7 @@ func (rc *redigoCluster) UpdateClusterIndexes() (err error) {
 			for j := 0; j < i; j++ {
 				rc.Pools[i].Close()
 			}
-			rc.RWLock.Unlock()
+			rc.RWMutex.Unlock()
 			return
 		}
 
@@ -76,16 +75,16 @@ func (rc *redigoCluster) UpdateClusterIndexes() (err error) {
 		}
 	}
 
-	rc.RWLock.Unlock()
+	rc.RWMutex.Unlock()
 	return
 }
 
 // 指定读锁. 中间可能会更新cluster indexes
 func (rc *redigoCluster) indexRedis(key string) *redigoPool {
 	sl := Slot(key)
-	rc.RWLock.RLock()
+	rc.RWMutex.RLock()
 	ret := rc.Index[sl]
-	rc.RWLock.RUnlock()
+	rc.RWMutex.RUnlock()
 	return ret
 }
 
