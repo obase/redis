@@ -56,7 +56,7 @@ type Redis interface {
 type Config struct {
 	Key string `json:"key" bson:"key" yaml:"key"`
 	// Conn参数
-	Network        string        `json:"network" bson:"network" yson:"network"`                      // 网络类簇,默认TCP
+	Network        string        `json:"network" bson:"network" yaml:"network"`                      // 网络类簇,默认TCP
 	Address        []string      `json:"address" bson:"address" yaml:"address"`                      //连接的ip:port, 默认127.0.0.1:6379.
 	Keepalive      time.Duration `json:"keepalive" bson:"keepalive" yaml:"keepalive"`                //KeepAlive的间隔, 默认0不开启keepalive
 	ConnectTimeout time.Duration `json:"connectTimeout" bson:"connectTimeout" yaml:"connectTimeout"` //连接超时, 默认0不设置
