@@ -3,8 +3,11 @@ package redis
 import (
 	"fmt"
 	redigo "github.com/gomodule/redigo/redis"
+	"github.com/obase/kit"
 	"log"
 	"reflect"
+	"strconv"
+	"sync"
 	"testing"
 	"time"
 )
@@ -78,4 +81,47 @@ func TestList(t *testing.T) {
 	c.T = time.Now().Unix()
 	c = <-ch
 	fmt.Println(c)
+}
+
+func TestString(t *testing.T) {
+
+	paras := 100
+	times := 100 * 10000
+	wg := new(sync.WaitGroup)
+	start := time.Now().UnixNano()
+	for i := 0; i < paras; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			test1(times)
+		}()
+	}
+	wg.Wait()
+	end := time.Now().UnixNano()
+	fmt.Printf("used(ns): %v\n", end-start)
+	time.Sleep(time.Second)
+}
+
+func test1(times int) {
+	var str string
+	for j := 0; j < times; j++ {
+		str = "ThinkPad T450 开箱安装内存SSD升级Windows10过程小记- 老司机-看" + "is Thinkpad t450s 16G SSD硬盘安装win7 缓存方法 - 童年的..._博客园" + ":" + strconv.Itoa(j)
+	}
+	_ = str
+	//fmt.Fprintln(os.Stdout, str)
+}
+
+func test2(times int) {
+	var str string
+	for j := 0; j < times; j++ {
+		buf := kit.BorrowBuffer()
+		buf.WriteString("ThinkPad T450 开箱安装内存SSD升级Windows10过程小记- 老司机-看")
+		buf.WriteString("is Thinkpad t450s 16G SSD硬盘安装win7 缓存方法 - 童年的..._博客园")
+		buf.WriteString(":")
+		buf.WriteString(strconv.Itoa(j))
+		str = buf.String()
+		kit.ReturnBuffer(buf)
+	}
+	_ = str
+	//fmt.Fprintln(os.Stdout, str)
 }
