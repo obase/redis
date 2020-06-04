@@ -3,7 +3,6 @@ module github.com/obase/redis
 go 1.12
 
 require (
-	github.com/gomodule/redigo v1.8.1
-	github.com/obase/conf v1.10.1
-	github.com/obase/kit v0.0.4
+	github.com/gomodule/redigo v2.0.0+incompatible
+	github.com/obase/conf v1.8.0
 )
